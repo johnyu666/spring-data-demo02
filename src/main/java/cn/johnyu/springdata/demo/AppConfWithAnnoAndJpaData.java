@@ -24,18 +24,22 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import cn.johnyu.springdata.demo.pojo.Customer;
-import cn.johnyu.springdata.demo.service.CustomerServiceImpl;
+import cn.johnyu.springdata.demo.repository.CustomerRepository;
+import cn.johnyu.springdata.demo.service.CustomerManagerImpl;
 
+/**
+ * 使用Annotation，DATA-JPA,MySQL完成测试
+ * @author john
+ *
+ */
 @Configuration
-
 // @EnableJpaRepositories
 // 可选以下配置
-// @EnableJpaRepositories(basePackages=
-// {},entityManagerFactoryRef="",transactionManagerRef="")
-
-@ComponentScan(basePackages = { "service" })
+@EnableJpaRepositories(basePackages="cn.johnyu.springdata.demo"
+,entityManagerFactoryRef="entityManagerFactory",transactionManagerRef="transactionManager")
+@ComponentScan(basePackages = { "cn.johnyu.springdata.demo.service" })
 @EnableTransactionManagement(proxyTargetClass = false)
-public class App {
+public class AppConfWithAnnoAndJpaData {
 	@Bean
 	public DataSource getDataSource() {
 		DriverManagerDataSource ds = new DriverManagerDataSource("jdbc:mysql://localhost:3306/test", "root", "123");
@@ -50,7 +54,7 @@ public class App {
 		return vendor;
 	}
 
-	@Bean
+	@Bean(name="entityManagerFactory")
 	public LocalContainerEntityManagerFactoryBean entityManageFactory() {
 		LocalContainerEntityManagerFactoryBean emfb = new LocalContainerEntityManagerFactoryBean();
 		emfb.setDataSource(getDataSource());
@@ -67,23 +71,18 @@ public class App {
 		return emfb;
 	}
 
-	@Bean
+	@Bean(name="transactionManager")
 	public JpaTransactionManager getTransactionManager() {
 		return new JpaTransactionManager((EntityManagerFactory) entityManageFactory().getObject());
 	}
 
 	public static void main(String[] args) throws Exception {
-		ApplicationContext context = new AnnotationConfigApplicationContext(App.class);
-		// DataSource ds=context.getBean(DataSource.class);
-		// System.out.println(ds.getConnection());
-		// EntityManagerFactory factory=context.getBean(EntityManagerFactory.class);
-		//
-		// EntityManager manager=factory.createEntityManager();
-		// System.out.println(manager);
-		CustomerServiceImpl si = context.getBean(CustomerServiceImpl.class);
+		ApplicationContext context = new AnnotationConfigApplicationContext(AppConfWithAnnoAndJpaData.class);
+		
+		CustomerRepository cr=context.getBean(CustomerRepository.class);
 		Customer c = new Customer();
 		c.setCname("john");
-		si.save(c);
+		cr.save(c);
 
 	}
 }

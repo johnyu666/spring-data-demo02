@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import cn.johnyu.springdata.demo.pojo.Customer;
 
 @Service
-public class CustomerServiceImpl {
+public class CustomerManagerImpl implements CustomerManager {
 	
 	@PersistenceContext(unitName="entityManager")
 	private EntityManager em;

@@ -24,41 +24,50 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import cn.johnyu.springdata.demo.pojo.Customer;
-import cn.johnyu.springdata.demo.repository.CustomerRepository;
-import cn.johnyu.springdata.demo.service.CustomerServiceImpl;
+import cn.johnyu.springdata.demo.service.CustomerManagerImpl;
+
+/**
+ * 以Annotation的方式，使用JPA,Mysql,Hsqldb,
+ * @author john
+ *
+ */
 
 @Configuration
-
-// @EnableJpaRepositories
-// 可选以下配置
-@EnableJpaRepositories(basePackages="cn.johnyu.springdata.demo"
-,entityManagerFactoryRef="entityManagerFactory",transactionManagerRef="transactionManager")
-
-@ComponentScan(basePackages = { "service" })
+@ComponentScan(basePackages = { "cn.johnyu.springdata.demo.service" })
 @EnableTransactionManagement(proxyTargetClass = false)
-public class App3 {
+public class AppConfWithAnnoAndJpa {
+	
 	@Bean
-	public DataSource getDataSource() {
+	public DataSource getDataSourceWithMySql() {
 		DriverManagerDataSource ds = new DriverManagerDataSource("jdbc:mysql://localhost:3306/test", "root", "123");
 		ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
+		return ds;
+	}
+	@Bean DataSource getDataSourceWithHsql() {
+		DriverManagerDataSource ds = new DriverManagerDataSource("jdbc:hsqldb:file:db/testdb", "sa", "");
+		ds.setDriverClassName("org.hsqldb.jdbc.JDBCDriver");
 		return ds;
 	}
 
 	@Bean
 	public JpaVendorAdapter getHibernateJpaVendorAdapter() {
 		HibernateJpaVendorAdapter vendor = new HibernateJpaVendorAdapter();
-		vendor.setDatabasePlatform("org.hibernate.dialect.MySQL5Dialect");
+//		vendor.setDatabasePlatform("org.hibernate.dialect.MySQL5Dialect");
+		vendor.setDatabasePlatform("org.hibernate.dialect.HSQLDialect");
 		return vendor;
 	}
 
-	@Bean(name="entityManagerFactory")
+	@Bean
 	public LocalContainerEntityManagerFactoryBean entityManageFactory() {
 		LocalContainerEntityManagerFactoryBean emfb = new LocalContainerEntityManagerFactoryBean();
-		emfb.setDataSource(getDataSource());
+		
+		//此处可以更换数据源（Mysql及Hsql）
+		emfb.setDataSource(getDataSourceWithHsql());
+		
+		
 		emfb.setJpaVendorAdapter(getHibernateJpaVendorAdapter());
 		emfb.setPackagesToScan("cn.johnyu.springdata.demo.pojo");
 		emfb.setPersistenceUnitName("entityManager");
-
 		
 		Properties jpaProperties = new Properties();
 		jpaProperties.put("hibernate.ejb.naming_strategy", "org.hibernate.cfg.ImprovedNamingStrategy");
@@ -68,27 +77,16 @@ public class App3 {
 		return emfb;
 	}
 
-	@Bean(name="transactionManager")
+	@Bean
 	public JpaTransactionManager getTransactionManager() {
 		return new JpaTransactionManager((EntityManagerFactory) entityManageFactory().getObject());
 	}
 
 	public static void main(String[] args) throws Exception {
-		ApplicationContext context = new AnnotationConfigApplicationContext(App3.class);
-		// DataSource ds=context.getBean(DataSource.class);
-		// System.out.println(ds.getConnection());
-		// EntityManagerFactory factory=context.getBean(EntityManagerFactory.class);
-		//
-		// EntityManager manager=factory.createEntityManager();
-		// System.out.println(manager);
-//		CustomerServiceImpl si = context.getBean(CustomerServiceImpl.class);
-//		Customer c = new Customer();
-//		c.setCname("john");
-//		si.save(c);
-		CustomerRepository cr=context.getBean(CustomerRepository.class);
+		ApplicationContext context = new AnnotationConfigApplicationContext(AppConfWithAnnoAndJpa.class);
+		CustomerManagerImpl cm = context.getBean(CustomerManagerImpl.class);
 		Customer c = new Customer();
 		c.setCname("john");
-		cr.save(c);
-
+		cm.save(c);
 	}
 }
